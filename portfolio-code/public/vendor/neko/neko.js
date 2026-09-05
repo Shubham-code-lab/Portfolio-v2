@@ -11,7 +11,7 @@
  * The actual pixel value = offset × spriteSize (e.g. -3 × 32 = -96px).
  *
  * Usage (plain HTML):
- *   <script src="/neko.js"></script>
+ *   <script src="/vendor/neko/neko.js"></script>
  *   <script>
  *     document.addEventListener('DOMContentLoaded', () => {
  *       const cat = new Neko();
@@ -21,7 +21,7 @@
 
 // ---------------------------------------------------------------------------
 // Sprite sheet path
-// The file neko-sprites.gif lives in /public and is served at this URL.
+// The sprite sheet sits next to this script under public/vendor/neko/.
 // ---------------------------------------------------------------------------
 const nekoScriptEl = document.currentScript instanceof HTMLScriptElement
   ? document.currentScript

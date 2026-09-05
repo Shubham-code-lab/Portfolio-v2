@@ -44,7 +44,7 @@ jobs:
       - name: Replace published site
         if: steps.release.outputs.publish == 'true'
         run: |
-          rm -rf assets
+          rm -rf assets vendor
           rm -f index.html 404.html neko.js neko-sprites.gif vite.svg
           cp -a portfolio-code/dist/. .
           cp index.html 404.html
