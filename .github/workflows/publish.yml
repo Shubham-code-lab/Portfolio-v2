@@ -1,0 +1,65 @@
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: ${{ !contains(github.event.head_commit.message, '[skip publish]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read release.json
+        id: release
+        run: |
+          publish=$(jq -r '.publish' release.json)
+          version=$(jq -r '.version' release.json)
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [ "$publish" != "true" ]; then
+            echo "publish is not true; leaving the existing site unchanged."
+          fi
+
+      - name: Setup Node
+        if: steps.release.outputs.publish == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: portfolio-code/package-lock.json
+
+      - name: Install and build
+        if: steps.release.outputs.publish == 'true'
+        working-directory: portfolio-code
+        run: |
+          npm ci
+          npm run build
+
+      - name: Replace published site
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          rm -rf assets
+          rm -f index.html 404.html neko.js neko-sprites.gif vite.svg
+          cp -a portfolio-code/dist/. .
+          cp index.html 404.html
+          jq '.publish = false' release.json > release.tmp.json
+          mv release.tmp.json release.json
+
+      - name: Commit published site
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No site changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: publish v${{ steps.release.outputs.version }} [skip publish]"
+          git push

@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const SCRIPT_URL    = '/neko.js';
+const SCRIPT_URL    = `${import.meta.env.BASE_URL}neko.js`;
 const SCRIPT_MARKER = 'data-neko-script';
 
 const loadNekoScript = (): Promise<void> => {

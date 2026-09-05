@@ -1,31 +1,29 @@
-1] parallex effect
-2] amazon prime image scrolling
-3] side svg color flowing
+# Portfolio
 
+Static portfolio served by GitHub Pages from this repository root.
 
-webstie sticky top
+- Source: [`portfolio-code/`](portfolio-code/)
+- Live site: built `index.html` and `assets/` at the repo root
+- Changelog / publish switch: [`release.json`](release.json)
 
-mobile hamburger
+Local development:
 
+```bash
+cd portfolio-code
+npm install
+npm run dev
+```
 
+## Publish a new site
 
-mix-blend-mode: exclusion
+1. In a PR, bump `version` and `description` in `release.json` and set `"publish": true`.
+2. Merge that PR into `main`.
+3. The publish workflow rebuilds the site, replaces root `index.html` / `assets/`, then sets `publish` back to `false`.
 
-    -webkit-mask-size: 5%;
-    mask-size: 5%;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -ms-flex-direction: column;
-    flex-direction: column;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    will-change: transform;
-    color: var(--black);
+If `publish` is `false`, merging to `main` does not change the live site.
 
-    mask-size
+## GitHub (one-time)
 
-    mask-size
+**Pages:** Settings → Pages → Deploy from a branch → `main` → `/` (root).
+
+**Protect `main`:** require a pull request (no direct pushes). Allow **GitHub Actions** to bypass that rule so the publish job can commit the built site.

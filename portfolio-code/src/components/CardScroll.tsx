@@ -61,16 +61,23 @@ export default function CardScroll() {
         <CarouselArrow direction="left" onClick={scrollLeft} />
         <CarouselWrapper>
           <CarouselTrack ref={trackRef} onScroll={handleScroll}>
-            {circularCards.map((card, index) => (
-              <CarouselCard
-                key={index}
-                card={card}
-                isHovered={hoveredIndex === index}
-                onHoverIn={() => setHoveredIndex(index)}
-                onHoverOut={clearHover}
-                onClick={event => goToCard(card, index, event)}
-              />
-            ))}
+            {circularCards.map((card, index) => {
+              const uniqueOffset = index % CARDS.length;
+              const isMiddleCopy = index >= CARDS.length && index < CARDS.length * 2;
+              const eager = isMiddleCopy && uniqueOffset < 5;
+
+              return (
+                <CarouselCard
+                  key={index}
+                  card={card}
+                  eager={eager}
+                  isHovered={hoveredIndex === index}
+                  onHoverIn={() => setHoveredIndex(index)}
+                  onHoverOut={clearHover}
+                  onClick={event => goToCard(card, index, event)}
+                />
+              );
+            })}
           </CarouselTrack>
         </CarouselWrapper>
         <CarouselArrow direction="right" onClick={scrollRight} />
