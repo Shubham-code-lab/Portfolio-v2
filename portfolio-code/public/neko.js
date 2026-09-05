@@ -23,7 +23,12 @@
 // Sprite sheet path
 // The file neko-sprites.gif lives in /public and is served at this URL.
 // ---------------------------------------------------------------------------
-const SPRITE_SHEET_URL = '/neko-sprites.gif';
+const nekoScriptEl = document.currentScript instanceof HTMLScriptElement
+  ? document.currentScript
+  : document.querySelector('script[data-neko-script]');
+const SPRITE_SHEET_URL = nekoScriptEl instanceof HTMLScriptElement
+  ? new URL('neko-sprites.gif', nekoScriptEl.src).href
+  : 'neko-sprites.gif';
 
 // ---------------------------------------------------------------------------
 // Sprite sheet frame definitions

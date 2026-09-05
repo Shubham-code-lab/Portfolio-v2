@@ -7,9 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# App install and local build (published site at repo root is tracked)
 node_modules
-dist
-dist-ssr
+portfolio-code/node_modules
+portfolio-code/dist
+portfolio-code/dist-ssr
+.vite
 *.local
 
 # Editor directories and files

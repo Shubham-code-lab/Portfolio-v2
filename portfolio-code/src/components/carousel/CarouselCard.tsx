@@ -10,12 +10,13 @@ const { gap, imageHeight, expandPadding, detailHeight } = CAROUSEL_LAYOUT;
 interface Props {
   card:        CardData;
   isHovered:   boolean;
+  eager:       boolean;
   onHoverIn:   () => void;
   onHoverOut:  () => void;
   onClick:     (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-function CarouselCard({ card, isHovered, onHoverIn, onHoverOut, onClick }: Props) {
+function CarouselCard({ card, isHovered, eager, onHoverIn, onHoverOut, onClick }: Props) {
   return (
     <CardWrapper
       data-carousel-card
@@ -24,7 +25,13 @@ function CarouselCard({ card, isHovered, onHoverIn, onHoverOut, onClick }: Props
     >
       <Card $isHovered={isHovered} onClick={onClick}>
         <ImageWrap $isHovered={isHovered}>
-          <CardImage src={card.image} alt={card.title} loading="lazy" decoding="async" />
+          <CardImage
+            src={card.image}
+            alt={card.title}
+            loading={eager ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchPriority={eager ? 'high' : 'low'}
+          />
         </ImageWrap>
 
         <CardOverlay>

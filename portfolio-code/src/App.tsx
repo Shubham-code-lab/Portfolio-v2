@@ -16,7 +16,7 @@ function App() {
     <ThemeProvider>
       <GlobalStyles />
       <CardTransitionProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/Portfolio-v2">
           <Navbar />
           <Neko />
           {/*
