@@ -1,0 +1,79 @@
+---
+description: On `start`, work PORT sprint tickets, PR to main, update Jira and release.json
+alwaysApply: true
+---
+
+# PORT sprint (`start`)
+
+Jira: site `https://shubhamshindeinbox.atlassian.net`, project **PORT**.
+GitHub: PRs target **main**. Reviewer: **Shubham-code-lab** (PR body only; do not use `--reviewer` on their own PRs).
+
+Jira/GitHub **how** (batching, working JQL, failed `gh` calls): [port-jira-github-playbook.mdc](port-jira-github-playbook.mdc).
+
+## Jira links (always)
+
+Every mention of a ticket in chat, PR title/body, and Jira comments must be a markdown link:
+
+`[PORT-13](https://shubhamshindeinbox.atlassian.net/browse/PORT-13)`
+
+Never write bare `PORT-13` as the only reference.
+
+## Sprint gate (do not skip)
+
+Only implement tickets that are **already in the sprint** (active or future). Backlog is not work.
+
+If the user asks to code or open a PR for something that is **not** in the sprint:
+
+1. **Stop.** Tell them it is backlog, name the ticket as a link, and ask them to move it into the sprint.
+2. Do **not** create a new ticket and start it in the same turn.
+3. Do **not** start the work until the next `start` (or they confirm it is in the sprint).
+
+`start` with an empty sprint: say so and stop. Do not invent PORT-14-style work from the backlog.
+
+## When the user says `start`
+
+Do this in order. Do not skip Jira.
+
+1. Read sprint work with JQL:
+   `project = PORT AND (sprint in openSprints() OR sprint in futureSprints())`
+   Dragging a ticket onto a sprint on the backlog puts it in a **future** sprint. `openSprints()` only matches after **Start sprint**. Always include `futureSprints()` so planned sprint work is not missed.
+2. If that query is empty, stop and say so. Do not pull from backlog.
+3. Implement the sprint work (one ticket at a time unless they say otherwise).
+4. Open a PR to **main**. Assign/request review from **Shubham-code-lab**. If GitHub blocks self-review, still @ them in the PR body as the reviewer.
+5. On the Jira ticket: add a **worklog**, comment with the PR URL, move to **In Progress** (or **Done** only if they asked).
+6. Update [`release.json`](release.json) **before or with** the PR. `version` and `publish` stay at the top. Do **not** bump `version` or set `publish: true` unless they asked.
+   Put the ticket under `feature`, `bugfix`, `refactor`, or `other`. Each entry needs `ticket`, `jira` (browse URL), `description` (what this ticket did), and `pr`.
+   PR URL: if this branch already has a PR, use that. Else `GET /repos/Shubham-code-lab/Portfolio-v2/pulls?state=all&per_page=1` and use **number + 1** (`https://github.com/Shubham-code-lab/Portfolio-v2/pull/{n}`). After `gh pr create`, if the real number differs, fix `release.json` in a follow-up commit.
+7. Related follow-ups: create backlog tickets, **link** them to the current issue, leave them in backlog. Unrelated extras: create in backlog or list them; do not implement.
+8. Cap **new** tickets this run at **10** total. Never create tickets in a loop.
+
+## `release.json`
+
+`version` and `publish` first. Then change lists. Never a flat `tickets` array.
+
+```json
+{
+  "version": "1.0.1",
+  "publish": false,
+  "feature": [],
+  "bugfix": [],
+  "refactor": [],
+  "other": [
+    {
+      "ticket": "PORT-13",
+      "jira": "https://shubhamshindeinbox.atlassian.net/browse/PORT-13",
+      "description": "Moved the live site URL to the top of the README.",
+      "pr": "https://github.com/Shubham-code-lab/Portfolio-v2/pull/3"
+    }
+  ]
+}
+```
+
+Pick the list from what the ticket did: `feature` | `bugfix` | `refactor` | `other`.
+
+## Do not
+
+- Implement backlog-only items, even if the user also says “raise a PR” for a file. Tell them first; wait until that ticket is in the sprint.
+- Merge the PR (they review and approve).
+- Create more than 10 new issues per `start`.
+- Set `publish: true` just because a ticket finished.

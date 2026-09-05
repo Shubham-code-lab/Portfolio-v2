@@ -1,0 +1,69 @@
+---
+description: Known-good Jira and GitHub calls; batch them; do not retry failures that need extra approvals
+alwaysApply: true
+---
+
+# PORT playbook (fewer prompts)
+
+Jira MCP namespace: `user-Atlassian`. Site/cloudId: `https://shubhamshindeinbox.atlassian.net`. Project: **PORT**.
+
+## Cut approvals (you, one time)
+
+Cursor cannot skip MCP/shell prompts unless you allow them:
+
+1. **Cursor Settings → Agents → Auto-run** (or Auto-run in chat): turn on for this repo.
+2. **Cursor Settings → MCP → Atlassian**: enable **auto-run / allow without asking** for that server.
+
+Until that is on, every `searchJiraIssuesUsingJql` / `createJiraIssue` / Shell call can pop **Yes**. The agent must still **batch** so you click once per turn, not 20 times.
+
+## Agent: batch, do not rediscover
+
+On `start` or any Jira work, **one turn** should be enough for lookup:
+
+- `searchJiraIssuesUsingJql` with  
+  `jql`: `project = PORT AND (sprint in openSprints() OR sprint in futureSprints())`  
+  `fields`: `summary,status,issuetype,description,assignee,customfield_10020`  
+  `maxResults`: 20  
+- Do **not** also call `getVisibleJiraProjects`, dump the whole Atlassian catalog, or `getJiraIssue` unless the search row is not enough.
+- Sprint field is `customfield_10020`. Planned sprint = `state: "future"`. `openSprints()` misses those.
+
+After the PR exists, **one turn** for Jira wrap-up (parallel):
+
+- `transitionJiraIssue` id **21** = In Progress, **31** = Done (PORT team-managed).
+- `addWorklogToJiraIssue` (`timeSpent` e.g. `15m`)
+- `addCommentToJiraIssue` (PR URL)
+- `createIssueLink` `type`: `Relates`
+- `createJiraIssue` only for backlog follow-ups (max 10). Epic parent: `additional_fields: { "parent": { "key": "PORT-6" } }`
+
+## Ticket links
+
+In PR title/body and chat, always:
+
+`[PORT-13](https://shubhamshindeinbox.atlassian.net/browse/PORT-13)`
+
+## Sprint vs backlog
+
+`customfield_10020` empty or missing = **backlog**. Do not implement. Tell the user with a link and wait for them to add it to a sprint.
+
+`createJiraIssue` follow-ups stay in backlog. Do not then code those issues in the same run.
+
+## GitHub: what works vs what fails
+
+**Works**
+
+- `git push -u origin HEAD`
+- `gh pr create` (REST create)
+- `gh api repos/Shubham-code-lab/Portfolio-v2/pulls?state=all&per_page=1` — latest PR number; next is that + 1 for `release.json` `pr` before first push.
+- Commit author via env `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` (never `git config`)
+- PowerShell: `;` not `&&`
+
+**Fails — do not retry**
+
+- `gh pr view --json reviewRequests` and `gh pr edit`: GraphQL needs `read:org`; token only has `repo`.
+- `--reviewer Shubham-code-lab` on your own PR: GitHub blocks self-review. Put the reviewer in the PR body only.
+- `npm` without fnm PATH in old terminals.
+
+## Do not
+
+- Serial “list tools → get schema → search → get project → get issue → get transitions” for the same ticket.
+- Ask the user to approve the same failed `gh` GraphQL call again.

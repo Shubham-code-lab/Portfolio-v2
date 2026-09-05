@@ -1,9 +1,11 @@
 # Portfolio
 
+**Live site:** https://shubham-code-lab.github.io/Portfolio-v2/
+
 Static portfolio served by GitHub Pages from this repository root.
 
 - Source: [`portfolio-code/`](portfolio-code/)
-- Live site: built `index.html` and `assets/` at the repo root
+- Built files: `index.html` and `assets/` at the repo root
 - Changelog / publish switch: [`release.json`](release.json)
 
 Local development:
@@ -27,6 +29,3 @@ If `publish` is `false`, merging to `main` does not change the live site.
 **Pages:** Settings → Pages → Deploy from a branch → `main` → `/` (root).
 
 **Protect `main`:** require a pull request (no direct pushes). Allow **GitHub Actions** to bypass that rule so the publish job can commit the built site.
-
-
-Live at :https://shubham-code-lab.github.io/Portfolio-v2/home

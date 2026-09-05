@@ -1,5 +1,21 @@
 {
   "version": "1.0.1",
-  "description": "Move the neko widget into vendor/neko so the repo root stays cleaner.",
-  "publish": false
+  "publish": false,
+  "feature": [],
+  "bugfix": [],
+  "refactor": [],
+  "other": [
+    {
+      "ticket": "PORT-13",
+      "jira": "https://shubhamshindeinbox.atlassian.net/browse/PORT-13",
+      "description": "Moved the live GitHub Pages URL to the top of the README.",
+      "pr": "https://github.com/Shubham-code-lab/Portfolio-v2/pull/3"
+    },
+    {
+      "ticket": "PORT-14",
+      "jira": "https://shubhamshindeinbox.atlassian.net/browse/PORT-14",
+      "description": "Added Cursor start rules (sprint gate, Jira links, release changelog).",
+      "pr": "https://github.com/Shubham-code-lab/Portfolio-v2/pull/3"
+    }
+  ]
 }
