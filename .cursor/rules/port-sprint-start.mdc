@@ -12,8 +12,10 @@ GitHub: PRs target **main**. Reviewer: **Shubham-code-lab**.
 
 Do this in order. Do not skip Jira.
 
-1. Read **open sprint** only (`project = PORT AND sprint in openSprints()`). Ignore backlog except to create/link extras.
-2. If the sprint is empty, stop and say so. Do not pull from backlog.
+1. Read sprint work with JQL:
+   `project = PORT AND (sprint in openSprints() OR sprint in futureSprints())`
+   Dragging a ticket onto a sprint on the backlog puts it in a **future** sprint. `openSprints()` only matches after **Start sprint**. Always include `futureSprints()` so planned sprint work is not missed.
+2. If that query is empty, stop and say so. Do not pull from backlog.
 3. Implement the sprint work (one ticket at a time unless they say otherwise).
 4. Open a PR to **main**. Assign/request review from **Shubham-code-lab**. If GitHub blocks self-review, still @ them in the PR body as the reviewer.
 5. On the Jira ticket: add a **worklog**, comment with the PR URL, move to **In Progress** (or **Done** only if they asked).
