@@ -1,0 +1,42 @@
+---
+description: On `start`, work PORT sprint tickets, PR to main, update Jira and release.json
+alwaysApply: true
+---
+
+# PORT sprint (`start`)
+
+Jira: site `https://shubhamshindeinbox.atlassian.net`, project **PORT**.
+GitHub: PRs target **main**. Reviewer: **Shubham-code-lab**.
+
+## When the user says `start`
+
+Do this in order. Do not skip Jira.
+
+1. Read **open sprint** only (`project = PORT AND sprint in openSprints()`). Ignore backlog except to create/link extras.
+2. If the sprint is empty, stop and say so. Do not pull from backlog.
+3. Implement the sprint work (one ticket at a time unless they say otherwise).
+4. Open a PR to **main**. Assign/request review from **Shubham-code-lab**. If GitHub blocks self-review, still @ them in the PR body as the reviewer.
+5. On the Jira ticket: add a **worklog**, comment with the PR URL, move to **In Progress** (or **Done** only if they asked).
+6. Update [`release.json`](release.json): add the ticket key to `tickets`. Do **not** bump `version` or set `publish: true` unless they asked.
+7. Related follow-ups: create backlog tickets, **link** them to the current issue, leave them in backlog. Unrelated extras: create in backlog or list them; do not implement.
+8. Cap **new** tickets this run at **10** total. Never create tickets in a loop.
+
+## `release.json`
+
+```json
+{
+  "version": "1.0.1",
+  "description": "…",
+  "publish": false,
+  "tickets": ["PORT-7"]
+}
+```
+
+`tickets` is the list of Jira keys in this unreleased work.
+
+## Do not
+
+- Implement backlog-only items.
+- Merge the PR (they review and approve).
+- Create more than 10 new issues per `start`.
+- Set `publish: true` just because a ticket finished.
