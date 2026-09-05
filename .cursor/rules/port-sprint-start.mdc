@@ -41,22 +41,35 @@ Do this in order. Do not skip Jira.
 3. Implement the sprint work (one ticket at a time unless they say otherwise).
 4. Open a PR to **main**. Assign/request review from **Shubham-code-lab**. If GitHub blocks self-review, still @ them in the PR body as the reviewer.
 5. On the Jira ticket: add a **worklog**, comment with the PR URL, move to **In Progress** (or **Done** only if they asked).
-6. Update [`release.json`](release.json): add the ticket key to `tickets`. Do **not** bump `version` or set `publish: true` unless they asked.
+6. Update [`release.json`](release.json) **before or with** the PR. `version` and `publish` stay at the top. Do **not** bump `version` or set `publish: true` unless they asked.
+   Put the ticket under `feature`, `bugfix`, `refactor`, or `other`. Each entry needs `ticket`, `jira` (browse URL), `description` (what this ticket did), and `pr`.
+   PR URL: if this branch already has a PR, use that. Else `GET /repos/Shubham-code-lab/Portfolio-v2/pulls?state=all&per_page=1` and use **number + 1** (`https://github.com/Shubham-code-lab/Portfolio-v2/pull/{n}`). After `gh pr create`, if the real number differs, fix `release.json` in a follow-up commit.
 7. Related follow-ups: create backlog tickets, **link** them to the current issue, leave them in backlog. Unrelated extras: create in backlog or list them; do not implement.
 8. Cap **new** tickets this run at **10** total. Never create tickets in a loop.
 
 ## `release.json`
 
+`version` and `publish` first. Then change lists. Never a flat `tickets` array.
+
 ```json
 {
   "version": "1.0.1",
-  "description": "…",
   "publish": false,
-  "tickets": ["PORT-7"]
+  "feature": [],
+  "bugfix": [],
+  "refactor": [],
+  "other": [
+    {
+      "ticket": "PORT-13",
+      "jira": "https://shubhamshindeinbox.atlassian.net/browse/PORT-13",
+      "description": "Moved the live site URL to the top of the README.",
+      "pr": "https://github.com/Shubham-code-lab/Portfolio-v2/pull/3"
+    }
+  ]
 }
 ```
 
-`tickets` is the list of Jira keys in this unreleased work.
+Pick the list from what the ticket did: `feature` | `bugfix` | `refactor` | `other`.
 
 ## Do not
 

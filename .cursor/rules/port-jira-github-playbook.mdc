@@ -53,7 +53,7 @@ In PR title/body and chat, always:
 
 - `git push -u origin HEAD`
 - `gh pr create` (REST create)
-- `gh api -X PATCH repos/Shubham-code-lab/Portfolio-v2/pulls/N` to set title/body
+- `gh api repos/Shubham-code-lab/Portfolio-v2/pulls?state=all&per_page=1` — latest PR number; next is that + 1 for `release.json` `pr` before first push.
 - Commit author via env `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` (never `git config`)
 - PowerShell: `;` not `&&`
 
