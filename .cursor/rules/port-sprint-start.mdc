@@ -6,7 +6,29 @@ alwaysApply: true
 # PORT sprint (`start`)
 
 Jira: site `https://shubhamshindeinbox.atlassian.net`, project **PORT**.
-GitHub: PRs target **main**. Reviewer: **Shubham-code-lab**.
+GitHub: PRs target **main**. Reviewer: **Shubham-code-lab** (PR body only; do not use `--reviewer` on their own PRs).
+
+Jira/GitHub **how** (batching, working JQL, failed `gh` calls): [port-jira-github-playbook.mdc](port-jira-github-playbook.mdc).
+
+## Jira links (always)
+
+Every mention of a ticket in chat, PR title/body, and Jira comments must be a markdown link:
+
+`[PORT-13](https://shubhamshindeinbox.atlassian.net/browse/PORT-13)`
+
+Never write bare `PORT-13` as the only reference.
+
+## Sprint gate (do not skip)
+
+Only implement tickets that are **already in the sprint** (active or future). Backlog is not work.
+
+If the user asks to code or open a PR for something that is **not** in the sprint:
+
+1. **Stop.** Tell them it is backlog, name the ticket as a link, and ask them to move it into the sprint.
+2. Do **not** create a new ticket and start it in the same turn.
+3. Do **not** start the work until the next `start` (or they confirm it is in the sprint).
+
+`start` with an empty sprint: say so and stop. Do not invent PORT-14-style work from the backlog.
 
 ## When the user says `start`
 
@@ -38,7 +60,7 @@ Do this in order. Do not skip Jira.
 
 ## Do not
 
-- Implement backlog-only items.
+- Implement backlog-only items, even if the user also says “raise a PR” for a file. Tell them first; wait until that ticket is in the sprint.
 - Merge the PR (they review and approve).
 - Create more than 10 new issues per `start`.
 - Set `publish: true` just because a ticket finished.
