@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const SCRIPT_URL    = `${import.meta.env.BASE_URL}neko.js`;
+const SCRIPT_URL    = `${import.meta.env.BASE_URL}vendor/neko/neko.js`;
 const SCRIPT_MARKER = 'data-neko-script';
 
 const loadNekoScript = (): Promise<void> => {
@@ -35,7 +35,7 @@ const loadNekoScript = (): Promise<void> => {
   });
 };
 
-/** Boots the vanilla `/public/neko.js` cat once and tears it down on unmount. */
+/** Boots the vanilla cat from `public/vendor/neko` once and tears it down on unmount. */
 export const useNekoScript = (options: NekoOptions = {}): void => {
   const instanceRef = useRef<NekoInstance | null>(null);
 
