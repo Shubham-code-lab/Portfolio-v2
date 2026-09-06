@@ -59,34 +59,54 @@ const SCROLL_UP_PATH = [
 
 export default function ScrollUpText() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const sectionElement = sectionRef.current;
     if (!sectionElement) return undefined;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const firstEntry = entries[0];
-        if (firstEntry && firstEntry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0 },
-    );
+    let animationFrameId = 0;
 
-    observer.observe(sectionElement);
+    const updateProgress = () => {
+      animationFrameId = 0;
+
+      const viewportHeight = window.innerHeight;
+      if (viewportHeight <= 0) {
+        setScrollProgress(0);
+        return;
+      }
+
+      const sectionBounds = sectionElement.getBoundingClientRect();
+      const start = viewportHeight;
+      const end = viewportHeight * 0.36;
+      const rawProgress = (start - sectionBounds.top) / (start - end);
+      const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+
+      setScrollProgress(clampedProgress * clampedProgress * (3 - 2 * clampedProgress));
+    };
+
+    const scheduleProgressUpdate = () => {
+      if (animationFrameId === 0) {
+        animationFrameId = window.requestAnimationFrame(updateProgress);
+      }
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', scheduleProgressUpdate, { passive: true });
+    window.addEventListener('resize', scheduleProgressUpdate);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', scheduleProgressUpdate);
+      window.removeEventListener('resize', scheduleProgressUpdate);
+      if (animationFrameId !== 0) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
     };
   }, []);
 
   return (
-    <ScrollSection ref={sectionRef}>
+    <ScrollSection ref={sectionRef} $progress={scrollProgress}>
       <ScrollSvg
-        $visible={isVisible}
         viewBox="0 0 1800 475"
         preserveAspectRatio="none"
         fill="none"
@@ -100,33 +120,35 @@ export default function ScrollUpText() {
   );
 }
 
-const ScrollSection = styled.section`
+const ScrollSection = styled.section<{ $progress: number }>`
   width: 100%;
   height: 100vh;
   overflow: hidden;
   color: ${({ theme }) => theme.text};
+  --scroll-up-progress: ${({ $progress }) => $progress.toFixed(4)};
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 `;
 
 /**
- * The SVG is always sized at 85.7143 vh (matching the studionamma "height: 85.7143%"
- * of a 100 vh parent). Animation uses scaleY instead of height because transform
- * transitions are GPU-accelerated and work reliably — percentage-height transitions
- * frequently fail to interpolate in browsers.
- *
- * transform-origin: 50% 0%  →  text stretches downward from the top edge, exactly
- * like the studionamma.com effect.
+ * The SVG height follows scroll progress directly so the footer reverses with
+ * the user's motion instead of firing a one-time reveal.
  */
-const ScrollSvg = styled.svg<{ $visible: boolean }>`
+const ScrollSvg = styled.svg`
   width: 100%;
-  height: 85.7143vh;
+  height: calc(max(0.2rem, 50dvh * var(--scroll-up-progress)));
   display: block;
+  opacity: calc(0.18 + (0.82 * var(--scroll-up-progress)));
+  transform: translateY(calc((1 - var(--scroll-up-progress)) * 1.2rem));
+  transition:
+    height 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+  will-change: height, opacity, transform;
 
-  translate: none;
-  rotate: none;
-  scale: none;
-  transform-origin: 50% 0%;
-  transform: scaleY(${({ $visible }) => ($visible ? 1 : 0)});
-
-  transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
