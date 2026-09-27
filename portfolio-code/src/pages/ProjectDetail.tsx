@@ -14,12 +14,6 @@ const CONTENT_TOP  = NAVBAR_HEIGHT + BREADCRUMB_H;
 const POST_LAND_FADE_MS  = 60;
 const TEXT_POST_LAND_MS  = 80;
 
-const SECTIONS = [
-  { label: 'Tech Stack', placeholder: '— coming soon —' },
-  { label: 'Gallery',    placeholder: '— coming soon —' },
-  { label: 'Links',      placeholder: '— coming soon —' },
-] as const;
-
 const resolveCardIndex = (rawId: string | undefined): number => {
   const numericId = Number(rawId ?? 0);
   if (!Number.isFinite(numericId)) return 0;
@@ -50,7 +44,7 @@ export default function ProjectDetail() {
         <Title>{card.title}</Title>
 
         <MetaRow>
-          <MetaRating>★ {card.rating}</MetaRating>
+          <MetaRating>{card.status ?? `★ ${card.rating}`}</MetaRating>
           <MetaYear>{card.year}</MetaYear>
           {card.tags.map(tag => <MetaTag key={tag}>{tag}</MetaTag>)}
         </MetaRow>
@@ -60,12 +54,47 @@ export default function ProjectDetail() {
           <SectionText>{card.desc}</SectionText>
         </Section>
 
-        {SECTIONS.map(section => (
-          <Section key={section.label}>
-            <SectionLabel>{section.label}</SectionLabel>
-            <Placeholder>{section.placeholder}</Placeholder>
-          </Section>
-        ))}
+        <Section>
+          <SectionLabel>My role</SectionLabel>
+          {card.role ? <SectionText>{card.role}</SectionText> : <Placeholder>— coming soon —</Placeholder>}
+        </Section>
+
+        <Section>
+          <SectionLabel>What I built</SectionLabel>
+          {card.highlights?.length ? (
+            <HighlightList>
+              {card.highlights.map(highlight => <li key={highlight}>{highlight}</li>)}
+            </HighlightList>
+          ) : (
+            <Placeholder>— coming soon —</Placeholder>
+          )}
+        </Section>
+
+        <Section>
+          <SectionLabel>Tech stack</SectionLabel>
+          {card.techStack?.length ? (
+            <TechList>
+              {card.techStack.map(technology => <TechItem key={technology}>{technology}</TechItem>)}
+            </TechList>
+          ) : (
+            <Placeholder>— coming soon —</Placeholder>
+          )}
+        </Section>
+
+        <Section>
+          <SectionLabel>Links</SectionLabel>
+          {card.links?.length ? (
+            <LinkList>
+              {card.links.map(link => (
+                <ProjectLink key={link.href} href={link.href} target="_blank" rel="noreferrer">
+                  {link.label}<span aria-hidden>↗</span>
+                </ProjectLink>
+              ))}
+            </LinkList>
+          ) : (
+            <Placeholder>— coming soon —</Placeholder>
+          )}
+        </Section>
       </RightPanel>
     </PageWrap>
   );
@@ -165,6 +194,62 @@ const SectionText = styled.p`
   line-height: 1.8;
   color: ${({ theme }) => theme.text};
   margin: 0;
+`;
+
+const HighlightList = styled.ul`
+  display: grid;
+  gap: 1.2rem;
+  margin: 0;
+  padding-left: 2rem;
+  color: ${({ theme }) => theme.text};
+  font-size: 1.4rem;
+  line-height: 1.7;
+
+  li::marker {
+    color: ${({ theme }) => theme.accent};
+  }
+`;
+
+const TechList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+`;
+
+const TechItem = styled.span`
+  padding: 0.7rem 1rem;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 999px;
+  background: ${({ theme }) => theme.surface};
+  color: ${({ theme }) => theme.text};
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const LinkList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+`;
+
+const ProjectLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.4rem;
+  border: 1px solid ${({ theme }) => theme.accent};
+  border-radius: 6px;
+  color: ${({ theme }) => theme.accent};
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: ${({ theme }) => theme.onAccent};
+    background: ${({ theme }) => theme.accent};
+  }
 `;
 
 const Placeholder = styled.div`
