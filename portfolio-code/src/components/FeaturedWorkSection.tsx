@@ -98,15 +98,15 @@ export default function FeaturedWorkSection() {
                       <MetaGrid>
                         <MetaBlock>
                           <MetaLabel>Discipline</MetaLabel>
-                          <MetaText>{card.tags.join(' - ')}</MetaText>
+                          <MetaText>{card.tags.join(' · ')}</MetaText>
                         </MetaBlock>
                         <MetaBlock>
                           <MetaLabel>{ROLE_LABEL}</MetaLabel>
-                          <MetaText>{ROLE_VALUE}</MetaText>
+                          <MetaText>{card.role ?? ROLE_VALUE}</MetaText>
                         </MetaBlock>
                         <MetaBlock>
                           <MetaLabel>Timeline</MetaLabel>
-                          <MetaText>{card.year}</MetaText>
+                          <MetaText>{card.timeline ?? card.year}</MetaText>
                         </MetaBlock>
                       </MetaGrid>
                       <CtaRow>

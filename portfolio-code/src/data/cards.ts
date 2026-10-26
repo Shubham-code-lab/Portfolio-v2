@@ -8,9 +8,44 @@ import image7 from '../assets/cropped-image.png';
 import image8 from '../assets/616945.png';
 import image9 from '../assets/sampleimage.jpeg';
 import image10 from '../assets/gear-5-luffy-6001x3841-25142.jpg';
+import financeDashboard from '../assets/finance-dashboard.svg';
 import type { CardData } from '../types/card';
 
 export const CARDS: readonly CardData[] = [
+  {
+    image: financeDashboard,
+    title: 'Finance',
+    year: '2026',
+    rating: 'Live',
+    status: 'Live product',
+    tags: ['Fintech', 'Full stack'],
+    desc: 'A private, cloud-backed personal finance workspace connecting bank imports, investments, spending, and long-term wealth planning.',
+    role: 'Product design & engineering',
+    timeline: 'Ongoing',
+    highlights: [
+      'Imports ICICI and SBI statements plus Groww stock and mutual-fund order histories through dedicated parsers.',
+      'Reconciles holdings, sold positions, SIP records, live market values, account balances, and Firebase snapshots.',
+      'Compares stocks and funds with interactive return charts, market-movement context, watchlists, and sortable performance tables.',
+      'Models lifestyle spending, savings, net worth, and future monthly changes in a responsive planning dashboard.',
+      'Protects each user’s financial records with Google sign-in and isolated Cloud Firestore storage.',
+    ],
+    techStack: [
+      'React 19',
+      'TypeScript',
+      'Vite',
+      'Firebase',
+      'TanStack Query',
+      'Recharts',
+      'React Hook Form',
+      'Vitest',
+      'Cloudflare Workers',
+      'GitHub Actions',
+    ],
+    links: [
+      { label: 'Open live app', href: 'https://shubham-code-lab.github.io/Finance/' },
+      { label: 'View source', href: 'https://github.com/Shubham-code-lab/Finance' },
+    ],
+  },
   { image: image1, title: 'Neon Dreams',    year: '2023', rating: '4.8', tags: ['Sci-Fi',    'Action'],      desc: 'A visual journey through neon-lit futures and digital horizons.' },
   { image: image2, title: 'Wild Paws',      year: '2022', rating: '4.6', tags: ['Nature',    'Wildlife'],    desc: 'Rare moments of cats in their most untamed, natural habitat.' },
   { image: image3, title: 'Gear Fifth',     year: '2023', rating: '4.9', tags: ['Animation', 'Action'],      desc: 'The ultimate power awakens in an epic clash of will and legend.' },

@@ -40,14 +40,14 @@ function CarouselCard({ card, isHovered, eager, onHoverIn, onHoverOut, onClick }
         </ImageWrap>
 
         <CardOverlay>
-          <OverlayMeta>★ {card.rating} · {card.year}</OverlayMeta>
+          <OverlayMeta>{card.status ?? `★ ${card.rating}`} · {card.year}</OverlayMeta>
         </CardOverlay>
 
         <CardDetailPanel $isHovered={isHovered}>
           <DetailInner>
             <DetailTitle>{card.title}</DetailTitle>
             <DetailRow>
-              <DetailRating>★ {card.rating}</DetailRating>
+              <DetailRating>{card.status ?? `★ ${card.rating}`}</DetailRating>
               <DetailDot>·</DetailDot>
               <DetailYear>{card.year}</DetailYear>
               <DetailDot>·</DetailDot>
