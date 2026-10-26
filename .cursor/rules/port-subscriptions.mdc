@@ -1,0 +1,18 @@
+---
+description: Shubham uses Cursor Agent for Jira; ChatGPT Codex is a separate extension with no MCP
+alwaysApply: true
+---
+
+# Subscriptions and who does what
+
+**Cursor Agent (this chat):** Has Atlassian MCP (`user-Atlassian`). Runs `start`, reads the PORT sprint, logs Jira, can open GitHub PRs.
+
+**ChatGPT Codex:** Separate **ChatGPT** subscription, running as a **VS Code/Cursor extension**, not Cursor’s built-in Codex. It does **not** get Cursor MCP, Customize → Atlassian, or `searchJiraIssuesUsingJql`. Never tell it to query Jira or type `start` as a sprint command.
+
+When the user wants Codex to code: this Agent queries the sprint, then pastes a **full ticket brief** (Jira link, description, file paths, PR rules). Codex implements from that paste only.
+
+Do not re-explain this unless asked. Do not assume Codex will see `.cursor/rules/` MCP steps.
+
+**Node:** `fnm` (WinGet Links + `fnm env`), not `C:\Program Files\nodejs`. Codex shells often have no `npm` on PATH.
+
+**GitHub:** `Shubham-code-lab/Portfolio-v2`. User reviews PRs. Live site: https://shubham-code-lab.github.io/Portfolio-v2/

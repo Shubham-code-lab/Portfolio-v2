@@ -329,6 +329,12 @@ class Neko {
   // Public API
   // -------------------------------------------------------------------------
 
+  /** Moves the chase target without synthesising a mouse event. */
+  setTarget(x, y) {
+    this.cursorPositionX = Math.min(Math.max(0, x), window.innerWidth);
+    this.cursorPositionY = Math.min(Math.max(0, y), window.innerHeight);
+  }
+
   /** Stops the cat from chasing the cursor (it stays where it is) */
   sleep() {
     if (!this.isAwake) return;

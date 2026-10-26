@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isOverTypography } from '../utils/dom';
 
 interface SpotlightConfig {
   /** Smoothing factor per frame for centre + radius (0..1). Higher = snappier. */
@@ -8,8 +7,6 @@ interface SpotlightConfig {
   radiusOverTypography: number;
   /** Spotlight radius (px) when outside typography. */
   radiusOutside: number;
-  /** CSS duration (s) for the close transition once the pointer leaves. */
-  closeDurationSec: number;
   /** When true the spotlight only appears while hovering typography. */
   revealOnlyOnTypography: boolean;
 }
@@ -17,15 +14,16 @@ interface SpotlightConfig {
 interface SpotlightHandles {
   wrapRef: React.RefObject<HTMLDivElement | null>;
   revealRef: React.RefObject<HTMLDivElement | null>;
-  dotRef: React.RefObject<HTMLDivElement | null>;
   overTypography: boolean;
-  dotVisible: boolean;
   handleEnter: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleMove:  (event: React.MouseEvent<HTMLDivElement>) => void;
   handleLeave: () => void;
 }
 
 interface Point { x: number; y: number; }
+
+/** Keep the lens alive while crossing the small visual gap between adjacent text lines. */
+const TEXT_LINE_BRIDGE_PX = 120;
 
 /**
  * Hook that drives the CursorReveal spotlight: clip-path follow loop, smoothed radius,
@@ -37,7 +35,6 @@ interface Point { x: number; y: number; }
 export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles => {
   const wrapRef   = useRef<HTMLDivElement>(null);
   const revealRef = useRef<HTMLDivElement>(null);
-  const dotRef    = useRef<HTMLDivElement>(null);
 
   const followRafRef  = useRef<number | null>(null);
   const moveRafRef    = useRef<number | null>(null);
@@ -46,28 +43,13 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
   const targetRef     = useRef<Point>({ x: 0, y: 0 });
   const currentRef    = useRef<Point>({ x: 0, y: 0 });
   const radiusRef     = useRef(0);
-  const dotShownRef   = useRef(false);
   const pendingRef    = useRef<Point>({ x: 0, y: 0 });
 
   const [overTypography, setOverTypography] = useState(false);
-  const [dotVisible,     setDotVisible]     = useState(false);
 
   const targetRadius = useCallback((): number => {
     return typoHoverRef.current ? config.radiusOverTypography : config.radiusOutside;
   }, [config.radiusOverTypography, config.radiusOutside]);
-
-  const setDotShown = useCallback((shown: boolean): void => {
-    if (dotShownRef.current === shown) return;
-    dotShownRef.current = shown;
-    setDotVisible(shown);
-  }, []);
-
-  const moveDotToViewport = useCallback((clientX: number, clientY: number): void => {
-    const dot = dotRef.current;
-    if (!dot) return;
-    dot.style.left = `${clientX}px`;
-    dot.style.top  = `${clientY}px`;
-  }, []);
 
   const localPosFromClient = useCallback((clientX: number, clientY: number): Point => {
     const layer = revealRef.current ?? wrapRef.current;
@@ -135,21 +117,18 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
     hoverRef.current = false;
     stopFollowLoop();
     cancelPendingTarget();
-    setDotShown(false);
 
     const layer = revealRef.current;
     if (!layer) return;
 
     const { x, y } = currentRef.current;
     radiusRef.current = 0;
-    layer.style.transition = `clip-path ${config.closeDurationSec}s cubic-bezier(0.22, 1, 0.36, 1)`;
+    layer.style.transition = 'none';
     layer.style.clipPath   = `circle(0px at ${x}px ${y}px)`;
-  }, [cancelPendingTarget, config.closeDurationSec, setDotShown, stopFollowLoop]);
+  }, [cancelPendingTarget, stopFollowLoop]);
 
   const beginSpotlight = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
     hoverRef.current = true;
-    setDotShown(true);
-    moveDotToViewport(event.clientX, event.clientY);
 
     const local = localPosFromClient(event.clientX, event.clientY);
     targetRef.current  = local;
@@ -161,10 +140,34 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
     layer.style.transition = 'none';
     layer.style.clipPath   = `circle(0px at ${local.x}px ${local.y}px)`;
     startFollowLoop();
-  }, [localPosFromClient, moveDotToViewport, setDotShown, startFollowLoop]);
+  }, [localPosFromClient, startFollowLoop]);
 
   const updateTypographyHover = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
-    const isOver = isOverTypography(event.target, wrapRef.current);
+    const wrap = wrapRef.current;
+    const textRects = wrap
+      ? Array.from(wrap.querySelectorAll<HTMLElement>('[data-cursor-typography]'))
+          .flatMap(element => Array.from(element.getClientRects()))
+      : [];
+
+    const isInsideRect = (rect: DOMRect): boolean => event.clientX >= rect.left
+      && event.clientX <= rect.right
+      && event.clientY >= rect.top
+      && event.clientY <= rect.bottom;
+
+    const isInsideBridge = textRects.some(upper => textRects.some(lower => {
+      const verticalGap = lower.top - upper.bottom;
+      if (verticalGap <= 0 || verticalGap > TEXT_LINE_BRIDGE_PX) return false;
+
+      const bridgeLeft = Math.max(upper.left, lower.left);
+      const bridgeRight = Math.min(upper.right, lower.right);
+      return bridgeLeft < bridgeRight
+        && event.clientX >= bridgeLeft
+        && event.clientX <= bridgeRight
+        && event.clientY >= upper.bottom
+        && event.clientY <= lower.top;
+    }));
+
+    const isOver = textRects.some(isInsideRect) || isInsideBridge;
     if (typoHoverRef.current === isOver) return;
     typoHoverRef.current = isOver;
     setOverTypography(isOver);
@@ -172,27 +175,20 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
 
   const handleEnter = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
     updateTypographyHover(event);
-    moveDotToViewport(event.clientX, event.clientY);
 
     const gateOk = !config.revealOnlyOnTypography || typoHoverRef.current;
-    if (!gateOk) {
-      setDotShown(true);
-      return;
-    }
+    if (!gateOk) return;
     beginSpotlight(event);
-  }, [beginSpotlight, config.revealOnlyOnTypography, moveDotToViewport, setDotShown, updateTypographyHover]);
+  }, [beginSpotlight, config.revealOnlyOnTypography, updateTypographyHover]);
 
   const handleMove = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
     updateTypographyHover(event);
-    moveDotToViewport(event.clientX, event.clientY);
 
     if (config.revealOnlyOnTypography) {
       if (!typoHoverRef.current) {
         if (hoverRef.current) endSpotlight();
-        setDotShown(true);
         return;
       }
-      setDotShown(true);
       if (!hoverRef.current) {
         beginSpotlight(event);
         return;
@@ -205,9 +201,7 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
     beginSpotlight,
     config.revealOnlyOnTypography,
     endSpotlight,
-    moveDotToViewport,
     scheduleTarget,
-    setDotShown,
     updateTypographyHover,
   ]);
 
@@ -227,9 +221,7 @@ export const useCursorSpotlight = (config: SpotlightConfig): SpotlightHandles =>
   return {
     wrapRef,
     revealRef,
-    dotRef,
     overTypography,
-    dotVisible,
     handleEnter,
     handleMove,
     handleLeave,

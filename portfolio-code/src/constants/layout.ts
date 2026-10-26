@@ -26,7 +26,10 @@ export const HERO_COPY_RIGHT_GUTTER_MOBILE = 16;
 export const HERO_COPY_MARGIN_BOTTOM_DESKTOP = HERO_GROUND_STRIP_HEIGHT_PX + 20;
 export const HERO_COPY_MARGIN_BOTTOM_MOBILE = HERO_GROUND_STRIP_HEIGHT_PX + 16;
 export const NAVBAR_BLUR = 2;
-export const MAX_CONTENT_WIDTH = 1440;
+/** Shared page container: 1280px outer width, with responsive inner gutters. */
+export const MAX_CONTENT_WIDTH = 1280;
+export const PAGE_GUTTER_MOBILE_PX = 32;
+export const PAGE_GUTTER_DESKTOP_PX = 64;
 
 // Z-index layers
 export const Z_INDEX = {

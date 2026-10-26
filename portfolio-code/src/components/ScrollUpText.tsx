@@ -105,7 +105,13 @@ export default function ScrollUpText() {
   }, []);
 
   return (
-    <ScrollSection ref={sectionRef} $progress={scrollProgress}>
+    <ScrollSection
+      id="contact"
+      data-nav-section="Contact"
+      data-cursor-label="[ interested? ]"
+      ref={sectionRef}
+      $progress={scrollProgress}
+    >
       <ScrollSvg
         viewBox="0 0 1800 475"
         preserveAspectRatio="none"
@@ -121,15 +127,46 @@ export default function ScrollUpText() {
 }
 
 const ScrollSection = styled.section<{ $progress: number }>`
+  position: relative;
+  isolation: isolate;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  color: ${({ theme }) => theme.text};
+  background-color: #111111;
+  color: #f2e8e4;
   --scroll-up-progress: ${({ $progress }) => $progress.toFixed(4)};
 
   display: flex;
   align-items: flex-start;
   justify-content: center;
+
+  /* Barely visible technical grid beneath the footer content. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(90deg, rgba(255, 255, 255, 1) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 1) 1px, transparent 1px);
+    background-size: 275px 175px;
+    opacity: 0.03;
+  }
+
+  /* Procedural, tiled film grain: no bitmap asset and no animation. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+    background-size: 70px auto;
+    background-repeat: repeat;
+    mix-blend-mode: soft-light;
+    opacity: 0.22;
+  }
 `;
 
 /**
@@ -137,6 +174,8 @@ const ScrollSection = styled.section<{ $progress: number }>`
  * the user's motion instead of firing a one-time reveal.
  */
 const ScrollSvg = styled.svg`
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: calc(max(0.2rem, 50dvh * var(--scroll-up-progress)));
   display: block;

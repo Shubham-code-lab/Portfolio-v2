@@ -1,14 +1,14 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { useMouseWhenVisible } from '../hooks/useMouseWhenVisible';
 import { easeInOut, mapProgress } from '../utils/math';
 import { spacing, typography } from '../styles/theme';
 import { mq } from '../utils/mediaQueries';
 
-/** Progress band over which the jaws are active (rest before/after). */
-const ACTIVE_RANGE = { start: 0.15, end: 0.85 } as const;
-/** Phase-1 ends here; Phase-2 (slide-out) runs from here to 1. */
-const PHASE_SPLIT = 0.45;
+/** Start opening once this portion of the section is visible. */
+const START_VISIBLE_RATIO = 0.7 ;
+/** Finish opening when the section bottom sits this far above the viewport bottom. */
+const FULLY_VISIBLE_OFFSET_PX = 80;
+const FULLY_OPEN_PROGRESS = 0.995;
 
 const STATS = [
   { value: '24+',   label: 'Projects'   },
@@ -17,40 +17,45 @@ const STATS = [
   { value: '∞',     label: 'Coffee'     },
 ] as const;
 
-interface JawGeometry {
-  topClipPath:    string;
-  bottomClipPath: string;
-  topTranslateY:  number;
-  bottomTranslateY: number;
-}
-
-/**
- * Computes the jaw clip-paths and translations for a given scroll progress.
- *
- * Phase 1 (0 → 0.45): the right edge lifts (top jaw) / drops (bottom jaw),
- *                     left edge stays anchored, mouth opens from the right.
- * Phase 2 (0.45 → 1): the resulting triangles slide off the canvas.
- */
-const computeJawGeometry = (rawProgress: number): JawGeometry => {
-  const activeProgress = mapProgress(rawProgress, ACTIVE_RANGE.start, ACTIVE_RANGE.end);
-  const phase1Progress = easeInOut(mapProgress(activeProgress, 0, PHASE_SPLIT));
-  const phase2Progress = easeInOut(mapProgress(activeProgress, PHASE_SPLIT, 1));
-
-  const topRightY    = Math.max(0, 100 - phase1Progress * 100);
-  const bottomRightY = Math.min(100, phase1Progress * 100);
-
-  return {
-    topClipPath:      `polygon(0% 0%, 100% 0%, 100% ${topRightY}%, 0% 100%)`,
-    bottomClipPath:   `polygon(0% 0%, 100% ${bottomRightY}%, 100% 100%, 0% 100%)`,
-    topTranslateY:    -(phase2Progress * 100),
-    bottomTranslateY:   phase2Progress * 100,
-  };
-};
+const getJawAngle = (openProgress: number): number => easeInOut(openProgress) * 90;
 
 export default function ClipReveal() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollProgress } = useMouseWhenVisible(containerRef, { threshold: 0.01 });
-  const jaws = computeJawGeometry(scrollProgress);
+  const [openProgress, setOpenProgress] = useState(0);
+  const jawAngle = getJawAngle(openProgress);
+  const isFullyOpen = openProgress >= FULLY_OPEN_PROGRESS;
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    let rafId: number | null = null;
+
+    const updateProgress = () => {
+      const rect = element.getBoundingClientRect();
+      const scrolledIntoView = window.innerHeight - rect.top;
+      const startVisibleAmount = rect.height * START_VISIBLE_RATIO;
+      const fullyVisibleWithOffset = rect.height + FULLY_VISIBLE_OFFSET_PX;
+
+      setOpenProgress(mapProgress(scrolledIntoView, startVisibleAmount, fullyVisibleWithOffset));
+      rafId = null;
+    };
+
+    const requestUpdate = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+
+    return () => {
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   return (
     <Outer ref={containerRef}>
@@ -82,8 +87,8 @@ export default function ClipReveal() {
         </ContentBottom>
       </ContentLayer>
 
-      <TopJaw    $clipPath={jaws.topClipPath}    $translateY={jaws.topTranslateY}    />
-      <BottomJaw $clipPath={jaws.bottomClipPath} $translateY={jaws.bottomTranslateY} />
+      <TopJaw    $angle={-jawAngle} $isFullyOpen={isFullyOpen} />
+      <BottomJaw $angle={jawAngle}  $isFullyOpen={isFullyOpen} />
     </Outer>
   );
 }
@@ -179,27 +184,31 @@ const StatLabel = styled.div`
 `;
 
 interface JawProps {
-  $clipPath:   string;
-  $translateY: number;
+  $angle: number;
+  $isFullyOpen: boolean;
 }
 
 /**
- * The two jaws form one solid block at rest. Each jaw's inner edge is shaped
- * via clip-path so the right side opens first; the left follows.
+ * The two jaws form one solid block at rest and pivot around the same
+ * left-side hinge, opening into a 180-degree spread.
  */
 const TopJaw = styled.div<JawProps>`
   position: absolute;
   left: 0;
   top: 0;
-  width: 100%;
+  width: 150%;
   height: 50%;
   background: ${({ theme }) => theme.accent};
-  will-change: clip-path, transform;
-  clip-path: ${({ $clipPath }) => $clipPath};
-  transform: translateY(${({ $translateY }) => $translateY}%);
+  transform-origin: left bottom;
+  opacity: ${({ $isFullyOpen }) => ($isFullyOpen ? 0 : 1)};
+  backface-visibility: hidden;
+  box-shadow: 0 0 0 2px ${({ theme }) => theme.accent};
+  will-change: transform, opacity;
+  transform: rotate(${({ $angle }) => $angle}deg);
 `;
 
 const BottomJaw = styled(TopJaw)`
   top: auto;
   bottom: 0;
+  transform-origin: left top;
 `;
