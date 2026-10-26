@@ -21,12 +21,16 @@ const CLOUD_DELAYS = [
   `-${2 * CLOUD_STAGGER_S}s`,
 ] as const;
 
-export default function HeroDesertScene() {
+interface HeroDesertSceneProps {
+  cloudsOnly?: boolean;
+}
+
+export default function HeroDesertScene({ cloudsOnly = false }: HeroDesertSceneProps) {
   return (
     <HeroSceneRoot aria-hidden>
       <SkyLayer>
         <ChimneyCluster>
-          <ChimneyGraphic />
+          {!cloudsOnly && <ChimneyGraphic />}
           {CLOUD_DELAYS.map((delay, index) => (
             <CloudChimneyActor
               key={delay}
@@ -41,7 +45,7 @@ export default function HeroDesertScene() {
         </ChimneyCluster>
       </SkyLayer>
 
-      <GroundStrip />
+      {!cloudsOnly && <GroundStrip />}
     </HeroSceneRoot>
   );
 }

@@ -5,7 +5,8 @@ import { CAROUSEL_LAYOUT, HOVER_SCALE } from '../../constants/carousel';
 import { mq } from '../../utils/mediaQueries';
 import { ellipsis, lineClamp } from '../../styles/mixins';
 
-const { gap, imageHeight, expandPadding, detailHeight } = CAROUSEL_LAYOUT;
+const { cardWidth, imageHeight, expandPadding, detailHeight } = CAROUSEL_LAYOUT;
+const CARD_INLINE_BLEED_PX = 8;
 
 interface Props {
   card:        CardData;
@@ -18,16 +19,20 @@ interface Props {
 
 function CarouselCard({ card, isHovered, eager, onHoverIn, onHoverOut, onClick }: Props) {
   return (
-    <CardWrapper
-      data-carousel-card
-      onMouseEnter={onHoverIn}
-      onMouseLeave={onHoverOut}
-    >
-      <Card $isHovered={isHovered} onClick={onClick}>
+    <CardWrapper data-carousel-card $isHovered={isHovered}>
+      <Card
+        data-carousel-card-surface
+        data-cursor-label="[ view case ]"
+        $isHovered={isHovered}
+        onMouseEnter={onHoverIn}
+        onMouseLeave={onHoverOut}
+        onClick={onClick}
+      >
         <ImageWrap $isHovered={isHovered}>
           <CardImage
             src={card.image}
             alt={card.title}
+            draggable={false}
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
             fetchPriority={eager ? 'high' : 'low'}
@@ -49,6 +54,20 @@ function CarouselCard({ card, isHovered, eager, onHoverIn, onHoverOut, onClick }
               {card.tags.map(tag => <DetailTag key={tag}>{tag}</DetailTag>)}
             </DetailRow>
             <DetailDesc>{card.desc}</DetailDesc>
+            <DetailMetaGrid>
+              <DetailMetaItem>
+                <span>Format</span>
+                <strong>Digital story</strong>
+              </DetailMetaItem>
+              <DetailMetaItem>
+                <span>Focus</span>
+                <strong>{card.tags[0]}</strong>
+              </DetailMetaItem>
+              <DetailMetaItem>
+                <span>Status</span>
+                <strong>Archive select</strong>
+              </DetailMetaItem>
+            </DetailMetaGrid>
           </DetailInner>
         </CardDetailPanel>
       </Card>
@@ -58,17 +77,20 @@ function CarouselCard({ card, isHovered, eager, onHoverIn, onHoverOut, onClick }
 
 export default memo(CarouselCard);
 
-const CardWrapper = styled.div`
-  flex: 0 0 calc(20% - ${gap}px);
-  min-width: 25rem;
+const CardWrapper = styled.div<{ $isHovered: boolean }>`
+  flex: 0 0 ${cardWidth + CARD_INLINE_BLEED_PX * 2}px;
+  width: ${cardWidth + CARD_INLINE_BLEED_PX * 2}px;
   position: relative;
+  z-index: ${({ $isHovered }) => ($isHovered ? 80 : 1)};
   /* padding/negative-margin trick: gives each card its own expansion area
      without disturbing the surrounding layout flow. */
-  padding: ${expandPadding}px 8px;
-  margin: -${expandPadding}px -8px;
+  padding: ${expandPadding}px ${CARD_INLINE_BLEED_PX}px;
+  margin: -${expandPadding}px -${CARD_INLINE_BLEED_PX}px;
 
-  @media (max-width: 1200px) { flex: 0 0 calc(25% - ${gap}px); }
-  ${mq.mobile} { flex: 0 0 calc(33.333% - ${gap}px); min-width: 20rem; }
+  ${mq.mobile} {
+    flex-basis: calc(min(${cardWidth}px, 100vw - 40px) + ${CARD_INLINE_BLEED_PX * 2}px);
+    width: calc(min(${cardWidth}px, 100vw - 40px) + ${CARD_INLINE_BLEED_PX * 2}px);
+  }
 `;
 
 const Card = styled.div<{ $isHovered: boolean }>`
@@ -189,6 +211,38 @@ const DetailDesc = styled.p`
   font-size: 1rem;
   line-height: 1.55;
   color: ${({ theme }) => theme.textMuted};
-  margin: 0;
-  ${lineClamp(3)};
+  margin: 0 0 0.9rem;
+  ${lineClamp(2)};
+`;
+
+const DetailMetaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid ${({ theme }) => theme.border};
+`;
+
+const DetailMetaItem = styled.div`
+  min-width: 0;
+
+  span,
+  strong {
+    display: block;
+    ${ellipsis};
+  }
+
+  span {
+    margin-bottom: 0.25rem;
+    color: ${({ theme }) => theme.textMuted};
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: ${({ theme }) => theme.text};
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
 `;

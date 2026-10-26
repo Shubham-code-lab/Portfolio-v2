@@ -6,17 +6,14 @@ import type { CardData } from '../types/card';
 import { useCardTransition } from '../contexts/CardTransitionContext';
 import { useInfiniteCarousel } from '../hooks/useInfiniteCarousel';
 import { CAROUSEL_LAYOUT } from '../constants/carousel';
-import { spacing } from '../styles/theme';
-import { mq } from '../utils/mediaQueries';
 import { hideScrollbar } from '../styles/mixins';
 import CarouselCard from './carousel/CarouselCard';
-import CarouselArrow from './carousel/CarouselArrow';
 
 const { gap, expandPadding, detailHeight } = CAROUSEL_LAYOUT;
 /** Vertical bleed inside the scroll track so scaled cards are not clipped (px). */
 const TRACK_SCROLL_BLEED_PX = 185;
 /** Horizontal bleed only — smaller than vertical so the row does not spill past the viewport. */
-const TRACK_SCROLL_INSET_REM = 2.4;
+const TRACK_SCROLL_INSET_PX = 20;
 
 /** Render the card list 3x so we can swap scrollLeft to the middle copy and
  *  appear infinite without observable jumps. */
@@ -31,7 +28,7 @@ export default function CardScroll() {
   const navigate = useNavigate();
   const { setTransition, setPhase } = useCardTransition();
 
-  const { trackRef, scrollByDirection, handleScroll } = useInfiniteCarousel({
+  const { trackRef, handleScroll, shouldSuppressClick } = useInfiniteCarousel({
     itemCount: CARDS.length,
     gapPx: gap,
   });
@@ -39,28 +36,32 @@ export default function CardScroll() {
   const circularCards = useMemo(() => buildCircularCards(CARDS), []);
 
   const goToCard = useCallback((card: CardData, indexInCircle: number, event: React.MouseEvent<HTMLDivElement>): void => {
+    if (shouldSuppressClick()) return;
     const rect       = event.currentTarget.getBoundingClientRect();
     const cardOffset = indexInCircle % CARDS.length;
     setTransition(card, rect);
     setPhase('flying-in');
     navigate(`/project/${cardOffset}`);
-  }, [navigate, setPhase, setTransition]);
+  }, [navigate, setPhase, setTransition, shouldSuppressClick]);
 
   const clearHover = useCallback(() => setHoveredIndex(null), []);
-  const scrollLeft  = useCallback(() => scrollByDirection('left'),  [scrollByDirection]);
-  const scrollRight = useCallback(() => scrollByDirection('right'), [scrollByDirection]);
 
   return (
-    <CarouselContainer>
-      <CarouselHeader>
-        <CarouselTitle>Projects</CarouselTitle>
-        <CarouselLabel>{CARDS.length} works</CarouselLabel>
-      </CarouselHeader>
-
+    <CarouselContainer
+      id="project-carousel"
+      data-nav-section="Projects"
+      $hasHoveredCard={hoveredIndex !== null}
+    >
       <CarouselViewport>
-        <CarouselArrow direction="left" onClick={scrollLeft} />
         <CarouselWrapper>
-          <CarouselTrack ref={trackRef} onScroll={handleScroll}>
+          <CarouselTrack
+            ref={trackRef}
+            data-cursor-state="move"
+            onScroll={handleScroll}
+            tabIndex={0}
+            role="region"
+            aria-label="Projects carousel; drag or use arrow keys to browse"
+          >
             {circularCards.map((card, index) => {
               const uniqueOffset = index % CARDS.length;
               const isMiddleCopy = index >= CARDS.length && index < CARDS.length * 2;
@@ -80,53 +81,28 @@ export default function CardScroll() {
             })}
           </CarouselTrack>
         </CarouselWrapper>
-        <CarouselArrow direction="right" onClick={scrollRight} />
       </CarouselViewport>
     </CarouselContainer>
   );
 }
 
-const CarouselContainer = styled.div`
+const CarouselContainer = styled.div<{ $hasHoveredCard: boolean }>`
   position: relative;
+  z-index: ${({ $hasHoveredCard }) => ($hasHoveredCard ? 80 : 1)};
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: ${spacing.xl} 0 clamp(${spacing.xxl}, 6vw, 6rem);
+  padding-block: 0;
   overflow-x: clip;
-`;
-
-const CarouselHeader = styled.div`
-  padding: 0 0 ${spacing.lg};
-  display: flex;
-  align-items: baseline;
-  gap: ${spacing.sm};
+  transition: z-index 0s;
 `;
 
 const CarouselViewport = styled.div`
   position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: clamp(${spacing.sm}, 2vw, ${spacing.md});
   width: 100%;
   max-width: 100%;
   min-width: 0;
-`;
-
-const CarouselTitle = styled.h2`
-  font-size: 2.8rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.primary[500]};
-
-  ${mq.mobile} { font-size: 2.2rem; }
-`;
-
-const CarouselLabel = styled.span`
-  font-size: 1.2rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.textMuted};
 `;
 
 /* Padding + negative margin pair so the card-expansion area does not push
@@ -152,12 +128,19 @@ const CarouselTrack = styled.div`
   overflow-x: auto;
   overflow-y: visible;
   padding:
-    ${TRACK_SCROLL_BLEED_PX}px ${TRACK_SCROLL_INSET_REM}rem
+    ${TRACK_SCROLL_BLEED_PX}px ${TRACK_SCROLL_INSET_PX}px
     ${TRACK_SCROLL_BLEED_PX + detailHeight}px;
   margin:
-    -${TRACK_SCROLL_BLEED_PX}px -${TRACK_SCROLL_INSET_REM}rem
-    -${TRACK_SCROLL_BLEED_PX + detailHeight}px -${TRACK_SCROLL_INSET_REM}rem;
+    -${TRACK_SCROLL_BLEED_PX}px 0
+    -${TRACK_SCROLL_BLEED_PX + detailHeight}px;
   max-width: none;
   box-sizing: border-box;
+  cursor: grab;
+  touch-action: pan-x pan-y;
+  user-select: none;
+
+  &[data-dragging='true'] {
+    cursor: grabbing;
+  }
   ${hideScrollbar};
 `;

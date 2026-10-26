@@ -59,34 +59,60 @@ const SCROLL_UP_PATH = [
 
 export default function ScrollUpText() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const sectionElement = sectionRef.current;
     if (!sectionElement) return undefined;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const firstEntry = entries[0];
-        if (firstEntry && firstEntry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0 },
-    );
+    let animationFrameId = 0;
 
-    observer.observe(sectionElement);
+    const updateProgress = () => {
+      animationFrameId = 0;
+
+      const viewportHeight = window.innerHeight;
+      if (viewportHeight <= 0) {
+        setScrollProgress(0);
+        return;
+      }
+
+      const sectionBounds = sectionElement.getBoundingClientRect();
+      const start = viewportHeight;
+      const end = viewportHeight * 0.36;
+      const rawProgress = (start - sectionBounds.top) / (start - end);
+      const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+
+      setScrollProgress(clampedProgress * clampedProgress * (3 - 2 * clampedProgress));
+    };
+
+    const scheduleProgressUpdate = () => {
+      if (animationFrameId === 0) {
+        animationFrameId = window.requestAnimationFrame(updateProgress);
+      }
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', scheduleProgressUpdate, { passive: true });
+    window.addEventListener('resize', scheduleProgressUpdate);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', scheduleProgressUpdate);
+      window.removeEventListener('resize', scheduleProgressUpdate);
+      if (animationFrameId !== 0) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
     };
   }, []);
 
   return (
-    <ScrollSection ref={sectionRef}>
+    <ScrollSection
+      id="contact"
+      data-nav-section="Contact"
+      data-cursor-label="[ interested? ]"
+      ref={sectionRef}
+      $progress={scrollProgress}
+    >
       <ScrollSvg
-        $visible={isVisible}
         viewBox="0 0 1800 475"
         preserveAspectRatio="none"
         fill="none"
@@ -100,33 +126,68 @@ export default function ScrollUpText() {
   );
 }
 
-const ScrollSection = styled.section`
+const ScrollSection = styled.section<{ $progress: number }>`
+  position: relative;
+  isolation: isolate;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  color: ${({ theme }) => theme.text};
+  background-color: #111111;
+  color: #f2e8e4;
+  --scroll-up-progress: ${({ $progress }) => $progress.toFixed(4)};
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  /* Barely visible technical grid beneath the footer content. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(90deg, rgba(255, 255, 255, 1) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 1) 1px, transparent 1px);
+    background-size: 275px 175px;
+    opacity: 0.03;
+  }
+
+  /* Procedural, tiled film grain: no bitmap asset and no animation. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+    background-size: 70px auto;
+    background-repeat: repeat;
+    mix-blend-mode: soft-light;
+    opacity: 0.22;
+  }
 `;
 
 /**
- * The SVG is always sized at 85.7143 vh (matching the studionamma "height: 85.7143%"
- * of a 100 vh parent). Animation uses scaleY instead of height because transform
- * transitions are GPU-accelerated and work reliably — percentage-height transitions
- * frequently fail to interpolate in browsers.
- *
- * transform-origin: 50% 0%  →  text stretches downward from the top edge, exactly
- * like the studionamma.com effect.
+ * The SVG height follows scroll progress directly so the footer reverses with
+ * the user's motion instead of firing a one-time reveal.
  */
-const ScrollSvg = styled.svg<{ $visible: boolean }>`
+const ScrollSvg = styled.svg`
+  position: relative;
+  z-index: 2;
   width: 100%;
-  height: 85.7143vh;
+  height: calc(max(0.2rem, 50dvh * var(--scroll-up-progress)));
   display: block;
+  opacity: calc(0.18 + (0.82 * var(--scroll-up-progress)));
+  transform: translateY(calc((1 - var(--scroll-up-progress)) * 1.2rem));
+  transition:
+    height 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out;
+  will-change: height, opacity, transform;
 
-  translate: none;
-  rotate: none;
-  scale: none;
-  transform-origin: 50% 0%;
-  transform: scaleY(${({ $visible }) => ($visible ? 1 : 0)});
-
-  transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;

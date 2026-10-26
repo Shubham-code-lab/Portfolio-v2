@@ -6,6 +6,8 @@ import image5 from '../assets/sampleimage16x9.jpg';
 import image6 from '../assets/sampleImagetiger16x9.jpg';
 import image7 from '../assets/cropped-image.png';
 import image8 from '../assets/616945.png';
+import image9 from '../assets/sampleimage.jpeg';
+import image10 from '../assets/gear-5-luffy-6001x3841-25142.jpg';
 import financeDashboard from '../assets/finance-dashboard.svg';
 import type { CardData } from '../types/card';
 
@@ -52,4 +54,6 @@ export const CARDS: readonly CardData[] = [
   { image: image6, title: 'Tiger Hour',     year: '2022', rating: '4.5', tags: ['Wildlife',  'Drama'],       desc: "Following one of nature's most powerful predators across seasons." },
   { image: image7, title: 'Frame by Frame', year: '2023', rating: '4.3', tags: ['Art',       'Documentary'], desc: 'The art of composition explored through meticulously crafted imagery.' },
   { image: image8, title: 'Cipher',         year: '2021', rating: '4.2', tags: ['Thriller',  'Mystery'],     desc: 'Hidden messages, layered narratives, and the beauty of the unseen.' },
+  { image: image9, title: 'Still Current',  year: '2024', rating: '4.7', tags: ['Editorial', 'Portrait'],   desc: 'Quiet portraiture shaped through restrained typography and cinematic pacing.' },
+  { image: image10, title: 'Skyward',       year: '2024', rating: '4.8', tags: ['Motion',     'Concept'],    desc: 'An expressive motion study about momentum, transformation, and open skies.' },
 ] as const;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import MainBackground from '../Ui/MainBackground';
 import {
@@ -14,15 +14,16 @@ import {
   HERO_COPY_MARGIN_BOTTOM_DESKTOP,
   HERO_COPY_MARGIN_BOTTOM_MOBILE,
 } from '../constants/layout';
-import { spacing, typography } from '../styles/theme';
+import { homeFontFamily, spacing, typography } from '../styles/theme';
 import { mq } from '../utils/mediaQueries';
-import { sandstoneBodyShadow, sandstoneTextShadow } from '../styles/mixins';
 import CardScroll from '../components/CardScroll';
 import FeaturedWorkSection from '../components/FeaturedWorkSection';
 import ClipReveal from '../components/ClipReveal';
 import CursorReveal from '../components/CursorReveal';
 import HeroDesertScene from '../components/HeroDesertScene';
 import ScrollUpText from '../components/ScrollUpText';
+import VisionSection from '../components/VisionSection';
+import ProjectRosterSection from '../components/ProjectRosterSection';
 import studioBackdropImage from '../assets/majestic-mountain-peak-tranquil-winter-landscape-generated-by-ai.jpg';
 
 interface HeroCopy {
@@ -31,30 +32,45 @@ interface HeroCopy {
 }
 
 const HERO_NORMAL: HeroCopy = {
-  title: <>Crafting digital<br />experiences</>,
+  title: (
+    <>
+      <span className="pixel-title-line" data-cursor-typography>
+        Crafting digital
+      </span>
+      <span className="pixel-title-line" data-cursor-typography>
+        experiences
+      </span>
+    </>
+  ),
   body:  'A focused builder of high-quality interfaces — obsessed with the details that make digital products feel alive.',
 };
 
 const HERO_REVEAL: HeroCopy = {
-  title: <>Breaking <HeroNoBreakInline>creative</HeroNoBreakInline><br />boundaries</>,
+  title: (
+    <>
+      <span className="pixel-title-line" data-cursor-typography>
+        Breaking creative
+      </span>
+      <span className="pixel-title-line" data-cursor-typography>
+        boundaries
+      </span>
+    </>
+  ),
   body:  'Hover anywhere in this area — the circle follows your cursor and reveals a parallel version of the truth.',
 };
 
 const STUDIO_COORDINATES = `35.1709° N, 136.8815° E`;
-
-/** Inline reference forwarded down because the styled element is declared at the bottom. */
-function HeroNoBreakInline({ children }: { children: React.ReactNode }) {
-  return <HeroNoBreak>{children}</HeroNoBreak>;
-}
 
 function HeroBlock({ copy }: { copy: HeroCopy }) {
   return (
     <HeroStickyContent>
       <GroundRow>
         <TypographyDepth>
-          <TypographyBlock data-cursor-typography>
+          <TypographyBlock>
             <Hero>{copy.title}</Hero>
-            <Text>{copy.body}</Text>
+            <Text>
+              <span data-cursor-typography>{copy.body}</span>
+            </Text>
           </TypographyBlock>
         </TypographyDepth>
       </GroundRow>
@@ -64,18 +80,29 @@ function HeroBlock({ copy }: { copy: HeroCopy }) {
 
 export default function Home() {
   const studioSectionRef = useRef<HTMLElement | null>(null);
+  const studioImageRef = useRef<HTMLImageElement | null>(null);
   const heroNormalNode = useMemo(() => <HeroBlock copy={HERO_NORMAL} />, []);
-  const heroRevealNode = useMemo(() => <HeroBlock copy={HERO_REVEAL} />, []);
-  const [studioImageOffsetRem, setStudioImageOffsetRem] = useState(0);
+  const heroRevealNode = useMemo(() => (
+    <RevealHeroVariant>
+      <RevealSceneLayer>
+        <HeroDesertScene cloudsOnly />
+      </RevealSceneLayer>
+      <RevealCopyLayer>
+        <HeroBlock copy={HERO_REVEAL} />
+      </RevealCopyLayer>
+    </RevealHeroVariant>
+  ), []);
 
   useEffect(() => {
+    let rafId: number | null = null;
+
     const handleStudioImageOffset = () => {
       const sectionElement = studioSectionRef.current;
+      const imageElement = studioImageRef.current;
       const viewportHeight = window.innerHeight;
-      const maxOffsetRem = 5;
+      const maxOffsetPx = 80;
 
-      if (!sectionElement || viewportHeight <= 0) {
-        setStudioImageOffsetRem(0);
+      if (!sectionElement || !imageElement || viewportHeight <= 0) {
         return;
       }
 
@@ -83,24 +110,31 @@ export default function Home() {
       const travelDistance = viewportHeight + sectionBounds.height;
       const scrollProgress = (viewportHeight - sectionBounds.top) / travelDistance;
       const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
-      const mappedOffsetRem = (clampedProgress - 0.5) * maxOffsetRem * 2;
+      const mappedOffsetPx = Math.round((clampedProgress - 0.5) * maxOffsetPx * 2);
 
-      setStudioImageOffsetRem(mappedOffsetRem);
+      imageElement.style.transform = `translate3d(0, ${mappedOffsetPx}px, 0) scale(1.05)`;
+      rafId = null;
+    };
+
+    const requestStudioImageOffset = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(handleStudioImageOffset);
     };
 
     handleStudioImageOffset();
-    window.addEventListener('scroll', handleStudioImageOffset, { passive: true });
-    window.addEventListener('resize', handleStudioImageOffset);
+    window.addEventListener('scroll', requestStudioImageOffset, { passive: true });
+    window.addEventListener('resize', requestStudioImageOffset);
 
     return () => {
-      window.removeEventListener('scroll', handleStudioImageOffset);
-      window.removeEventListener('resize', handleStudioImageOffset);
+      window.removeEventListener('scroll', requestStudioImageOffset);
+      window.removeEventListener('resize', requestStudioImageOffset);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
 
   return (
     <MainBackground>
-      <FirstSection>
+      <FirstSection id="home" data-nav-section="Home" data-cursor-state="move">
         <HeroStickyViewport>
           <HeroCanvas aria-hidden>
             <HeroDesertScene />
@@ -116,7 +150,7 @@ export default function Home() {
       </FirstSection>
 
       <Content>
-        <StudioShowcaseSection ref={studioSectionRef}>
+        <StudioShowcaseSection id="about" data-nav-section="About" ref={studioSectionRef}>
           <StudioCopy>
             <StudioEyebrow>[About the Studio]</StudioEyebrow>
             <StudioLead>
@@ -133,10 +167,10 @@ export default function Home() {
 
           <StudioVisualFrame>
             <StudioVisualImage
+              ref={studioImageRef}
               src={studioBackdropImage}
               alt="Mountain landscape behind studio location card"
               loading="lazy"
-              $offsetRem={studioImageOffsetRem}
             />
             <StudioInsetCard>
               <StudioInsetCoordinates>{STUDIO_COORDINATES}</StudioInsetCoordinates>
@@ -149,17 +183,26 @@ export default function Home() {
           </StudioVisualFrame>
         </StudioShowcaseSection>
 
-        <FeaturedWorkSection />
+      </Content>
 
-        <Section>
+      <VisionSection />
+
+      <CardScroll />
+
+      <FullWidthContent>
+        <FeaturedWorkSection />
+      </FullWidthContent>
+
+      <ProjectRosterSection />
+
+      <FullWidthContent>
+        <Section id="process" data-nav-section="Process">
           <SectionTitle>new title</SectionTitle>
           <ClipReveal />
         </Section>
 
-        <CardScroll />
-
         <TrailingTitle>new title</TrailingTitle>
-      </Content>
+      </FullWidthContent>
 
       <ScrollUpText />
     </MainBackground>
@@ -170,18 +213,27 @@ const Content = styled.div`
   box-sizing: border-box;
   width: 100%;
   max-width: ${MAX_CONTENT_WIDTH}px;
-  padding: 0 clamp(${spacing.lg}, 4vw, ${spacing.xxl});
+  margin-inline: auto;
+  padding-inline: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+`;
 
-  ${mq.mobile} {
-    padding: 0 ${spacing.sm};
-  }
+const FullWidthContent = styled.div`
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
 `;
 
 const FirstSection = styled.div`
   position: relative;
   height: ${HERO_FIRST_SECTION_HEIGHT};
   overflow-x: clip;
-  background: ${({ theme }) => theme.background};
+  background: transparent;
 `;
 
 /**
@@ -279,19 +331,40 @@ const TypographyBlock = styled.div`
   max-width: 72rem;
 `;
 
-/** Keeps "creative" on one line so it never breaks awkwardly inside the hero title. */
-const HeroNoBreak = styled.span`
-  white-space: nowrap;
-`;
-
 const Hero = styled.h1`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   font-size: ${typography.hero.size};
   font-weight: ${typography.hero.weight};
   line-height: ${typography.hero.lineHeight};
   margin-bottom: ${spacing.md};
   min-height: calc(${typography.hero.lineHeight}em * 2);
+  max-width: 100%;
+  --pixel-title-shadow-1: ${({ theme }) => theme.accent};
+  --pixel-title-shadow-2: ${({ theme }) => theme.borderStrong};
+  --pixel-title-shadow-3: ${({ theme }) => theme.shadow};
   color: ${({ theme }) => theme.text};
-  ${sandstoneTextShadow};
+  font-family: ${homeFontFamily};
+  text-transform: uppercase;
+  text-shadow:
+    -0.055em 0.055em 0 var(--pixel-title-shadow-1),
+    -0.11em 0.11em 0 var(--pixel-title-shadow-2),
+    -0.165em 0.165em 0 var(--pixel-title-shadow-3),
+    -0.22em 0.22em 0 rgba(0, 0, 0, 0.12);
+  filter: drop-shadow(-0.12em 0.16em 0 rgba(0, 0, 0, 0.18));
+
+  .pixel-title-line {
+    position: relative;
+    display: inline-block;
+    width: max-content;
+    max-width: 100%;
+    overflow-wrap: normal;
+    hyphens: manual;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+  }
 
   ${mq.tablet} { font-size: 6rem; }
   ${mq.mobile} {
@@ -300,37 +373,70 @@ const Hero = styled.h1`
   }
 `;
 
+const RevealHeroVariant = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+`;
+
+const RevealSceneLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: saturate(1.2) brightness(1.12);
+`;
+
+const RevealCopyLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+`;
+
 const Text = styled.p`
+  position: relative;
+  width: fit-content;
   font-size: ${typography.large.size};
   line-height: ${typography.large.lineHeight};
   max-width: 64rem;
+  --pixel-body-shadow-1: ${({ theme }) => theme.borderStrong};
+  --pixel-body-shadow-2: ${({ theme }) => theme.shadow};
   color: ${({ theme }) => theme.textMuted};
-  ${sandstoneBodyShadow};
+  font-family: ${homeFontFamily};
+  letter-spacing: 0;
+  text-shadow:
+    -0.04em 0.04em 0 var(--pixel-body-shadow-1),
+    -0.08em 0.08em 0 var(--pixel-body-shadow-2);
 
   ${mq.mobile} { font-size: 1.7rem; }
 `;
 
 const Section = styled.div`
-  margin: ${spacing.xxl} 0;
+  margin: 0;
   height: ${FIRST_SECTION_HEIGHT};
-
-  ${mq.mobile} { margin: ${spacing.xl} 0; }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: ${typography.h2.size};
+  width: 100%;
+  margin: 0 0 2rem;
+  padding-block: 1.4rem;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  font-size: clamp(4rem, 8vw, 10rem);
   font-weight: ${typography.h2.weight};
-  margin-bottom: ${spacing.md};
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
 
-  ${mq.tablet} { font-size: 3.6rem; }
   ${mq.mobile} {
-    font-size: 2.6rem;
-    margin-bottom: ${spacing.sm};
+    font-size: clamp(3.2rem, 14vw, 6rem);
+    margin-bottom: ${spacing.md};
   }
 `;
 
 const TrailingTitle = styled(SectionTitle)`
-  margin-top: 8rem;
+  margin-top: 0;
 `;
 
 const StudioShowcaseSection = styled.section`
@@ -338,7 +444,7 @@ const StudioShowcaseSection = styled.section`
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr);
   align-items: center;
   gap: clamp(${spacing.xl}, 5vw, 4.8rem);
-  margin: clamp(${spacing.xxl}, 8vw, 8rem) 0;
+  margin: 0;
 
   ${mq.tablet} {
     grid-template-columns: 1fr;
@@ -415,7 +521,7 @@ const StudioVisualFrame = styled.div`
   }
 `;
 
-const StudioVisualImage = styled.img<{ $offsetRem: number }>`
+const StudioVisualImage = styled.img`
   position: absolute;
   inset: 0;
   width: 100%;
@@ -423,9 +529,9 @@ const StudioVisualImage = styled.img<{ $offsetRem: number }>`
   object-fit: cover;
   object-position: center;
   display: block;
-  transform: translateY(${({ $offsetRem }) => `${$offsetRem}rem`}) scale(1.05);
-  transition: transform 0.25s linear;
+  transform: translate3d(0, 0, 0) scale(1.05);
   will-change: transform;
+  backface-visibility: hidden;
   z-index: 0;
   pointer-events: none;
 `;

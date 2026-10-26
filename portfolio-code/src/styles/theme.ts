@@ -11,6 +11,9 @@ export const spacing = {
   xxl: '10rem',
 } as const;
 
+/** Monospace face used by the hero copy and the portfolio's home-page UI. */
+export const homeFontFamily = "'Courier New', 'Lucida Console', monospace";
+
 /** Typography scale. Sizes in rem; line-heights as unitless numbers. */
 export const typography = {
   hero:  { size: '8rem',   weight: 700, lineHeight: 1.2 },

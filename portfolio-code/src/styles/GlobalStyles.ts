@@ -97,6 +97,14 @@ const GlobalStyles = createGlobalStyle`
     background: ${({ theme }) => theme.accentDim};
     color: ${({ theme }) => theme.accent};
   }
+
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    html,
+    body,
+    body * {
+      cursor: url('/Portfolio-v2/cursors/custom-arrow.svg') 2 2, auto !important;
+    }
+  }
 `;
 
 export default GlobalStyles;
